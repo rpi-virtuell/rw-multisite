@@ -44,7 +44,7 @@ class RW_MultisiteTools{
      * gibt alle Blogs einer Multisite aus
      */
     static function get_all_blogs() {
-        $html= '<ul><strong class="my-blog-sites">Seiten:</strong>';
+        $html= '<ul>';
         $subsites = get_sites();
         foreach( $subsites as $subsite ) {
             $subsite_id = get_object_vars($subsite)["blog_id"];
