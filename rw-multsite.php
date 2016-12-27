@@ -28,10 +28,11 @@ class RW_MultisiteTools{
 		    echo '<h1 class="my-blog-sites">Meine Seiten:</h1><ul>';
 		    
 			foreach( $subsites as $subsite ) {
-				$subsite_id = get_object_vars($subsite)["blog_id"];
+				$subsite_id = get_object_vars($subsite)["id"];
 				$subsite_domain = get_object_vars($subsite)["domain"];
 				$subsite_path = get_object_vars($subsite)["path"];
 				$subsite_name = get_object_vars($subsite)["blogname"];
+				if($subsite_name  == '') $subsite_name = 'Site '. domain;
 				//$subsite_description = get_blog_option($subsite_id,'blogdescription');
 				echo '<li><a href="http://' . $subsite_domain . $subsite_path .'">' . $subsite_name . '</a></li>';
 			}
@@ -58,10 +59,14 @@ class RW_MultisiteTools{
 	}
 	
 	function __construct(){
-		
-		add_shortcode('rw_multisite_list_sites',array('RW_MultisiteTools', 'the_blogs'));
-		add_shortcode('rw_multisite_list_my_sites',array('RW_MultisiteTools', 'my_blogs'));
-		
+
+        add_shortcode('rw_multisite_list_sites',function(){
+            RW_MultisiteTools::the_blogs();
+        });
+        add_shortcode('rw_multisite_list_my_sites',function(){
+            RW_MultisiteTools::my_blogs();
+        });
+
 		return $this;
 		
 	}
