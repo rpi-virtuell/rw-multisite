@@ -12,64 +12,66 @@
  * GitHub Plugin URI: https://github.com/rpi-virtuell/rw_multisite
  * GitHub Branch:     master
  */
- 
+
 
 class RW_MultisiteTools{
-	/**
-	* Liefert einen Array mit allen Blogs in einem Netzwerk zurück
-	*
-	* @returns array
-	*/
-	static function my_blogs() {
-	   
-	   if(is_user_logged_in()){
-		    $subsites=get_blogs_of_user(get_current_user_id( ), false);   
-			
-		    echo '<h1 class="my-blog-sites">Meine Seiten:</h1><ul>';
-		    
-			foreach( $subsites as $subsite ) {
-				$subsite_id = get_object_vars($subsite)["id"];
-				$subsite_domain = get_object_vars($subsite)["domain"];
-				$subsite_path = get_object_vars($subsite)["path"];
-				$subsite_name = get_object_vars($subsite)["blogname"];
-				if($subsite_name  == '') $subsite_name = 'Site '. domain;
-				//$subsite_description = get_blog_option($subsite_id,'blogdescription');
-				echo '<li><a href="http://' . $subsite_domain . $subsite_path .'">' . $subsite_name . '</a></li>';
-			}
-			echo '</ul>';
-	   }
+    /**
+     * Liefert einen Array mit allen Blogs in einem Netzwerk zurück
+     *
+     * @returns array
+     */
+    static function get_my_blogs() {
+        $html = '';
 
-	}
-	/**
-	* gibt alle Blogs einer Multisite aus
-	*/
-	static function the_blogs() {
-		echo '<ul><span class="my-blog-sites">Seiten:</span>';
-	    $subsites = get_sites();
-		foreach( $subsites as $subsite ) {
-			$subsite_id = get_object_vars($subsite)["blog_id"];
-			$subsite_domain = get_object_vars($subsite)["domain"];
-			$subsite_path = get_object_vars($subsite)["path"];
-			$subsite_name = get_blog_details($subsite_id)->blogname;
-			$subsite_description = get_blog_option($subsite_id,'blogdescription');
-			if ($subsite_id > 1) 
-			echo '<li><a href="http://' . $subsite_domain . $subsite_path .'">' . $subsite_name . '</a><br>'.$subsite_description.'</li>';
-		}
-		echo '</ul>';
-	}
-	
-	function __construct(){
+        if(is_user_logged_in()){
+            $subsites=get_blogs_of_user(get_current_user_id( ), false);
+
+            $html= '<h1 class="my-blog-sites">Meine Seiten:</h1><ul>';
+
+            foreach( $subsites as $subsite ) {
+                $subsite_domain = get_object_vars($subsite)["domain"];
+                $subsite_path = get_object_vars($subsite)["path"];
+                $subsite_name = get_object_vars($subsite)["blogname"];
+                if($subsite_name  == '') $subsite_name = $subsite_domain. $subsite_path;
+                //$subsite_description = get_blog_option($subsite_id,'blogdescription');
+                $html .= '<li><a href="http://' . $subsite_domain . $subsite_path .'">' . $subsite_name . '</a></li>';
+            }
+            $html .= '</ul>';
+        }
+        return $html;
+    }
+    /**
+     * gibt alle Blogs einer Multisite aus
+     */
+    static function get_all_blogs() {
+        $html= '<ul><span class="my-blog-sites">Seiten:</span>';
+        $subsites = get_sites();
+        foreach( $subsites as $subsite ) {
+            $subsite_id = get_object_vars($subsite)["blog_id"];
+            $subsite_domain = get_object_vars($subsite)["domain"];
+            $subsite_path = get_object_vars($subsite)["path"];
+            $subsite_name = get_blog_details($subsite_id)->blogname;
+            if($subsite_name  == '') $subsite_name = $subsite_domain. $subsite_path;
+            $subsite_description = get_blog_option($subsite_id,'blogdescription');
+            if ($subsite_id > 1)
+                $html .= '<li><a href="http://' . $subsite_domain . $subsite_path .'">' . $subsite_name . '</a><br>'.$subsite_description.'</li>';
+        }
+        $html .= '</ul>';
+        return $html;
+    }
+
+    static function init(){
 
         add_shortcode('rw_multisite_list_sites',function(){
-            RW_MultisiteTools::the_blogs();
+            return RW_MultisiteTools::get_all_blogs();
         });
         add_shortcode('rw_multisite_list_my_sites',function(){
-            RW_MultisiteTools::my_blogs();
+            return RW_MultisiteTools::get_my_blogs();
         });
 
-		return $this;
-		
-	}
-	
+        return $this;
+
+    }
+
 }
-new RW_MultisiteTools;
+RW_MultisiteTools::init();
