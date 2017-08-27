@@ -4,7 +4,7 @@
  * Plugin URI:       https://github.com/rpi-virtuell/rw_multisite
  * Description:      Tools for Wordpress Multisite. Use shortcodes: [rw_multisite_list_sites] [rw_multisite_list_my_sites]
  * Author:           Joachim Happel
- * Version:          0.0.1
+ * Version:          0.0.2
  * Licence:          GPLv3
  * Author URI:       http://joachim-happel.de
  * Text Domain:      rw_remote_auth_client
@@ -68,8 +68,6 @@ class RW_MultisiteTools{
         add_shortcode('rw_multisite_list_my_sites',function(){
             return RW_MultisiteTools::get_my_blogs();
         });
-
-        return $this;
 
     }
 
