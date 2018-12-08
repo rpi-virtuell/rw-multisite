@@ -19,14 +19,14 @@ class RW_MultisiteTools{
 	 * Liefert einen Array mit allen Blogs in einem Netzwerk zurück
 	 *
 	 * custom css recomended:
-
-	ul.rw-multisite-list {
-	margin-left:15px;
-	}
-	ul.rw-multisite-list li a{
-	margin: 0 5px 0 10px;
-	}
-
+         *
+	 * ul.rw-multisite-list {
+	 *    margin-left:15px;
+	 * }
+	 * ul.rw-multisite-list li a{
+	 *    margin: 0 5px 0 10px;
+	 * }
+	 *
 	 * @returns array
 	 */
 	static function get_my_blogs() {
