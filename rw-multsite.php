@@ -90,12 +90,7 @@ class RW_MultisiteTools{
 
 	static function custom_dashboard_widgets() {
 		global $wp_meta_boxes;
-		wp_add_dashboard_widget('custom_help_widget', '<b  style="color:red;">Supportmeldung</b>',  function(){
-			echo '<p><b>Hallo Administrator!</b><br> Wegen eines Datenverlustes mussten wir <b  style="color:red;">am 6.11.2018 eine Datenwiederherstellung dieses Blogs durchführen</b>. 
-			      Dabei wurden ordnungsgemäß alle Daten bis zum 5.11.2018 wiederhergestellt.<br>
-				  Beiträge, Kommentare und Einstellungen, die Sie am 6.11.2018 vorgenommen haben, sind nicht wiederhergestellt worden. <br>
-				  In Einzelfällen können wir Ihnen auch diese Daten zugänglich machen. Bitte schreiben Sie dazu an unseren <a href="mailto:info@rpi-virtuell.de">Support</a>.<br> Wir bitten Sie vielmals, die Unannehmlichkeiten zu entschuldigen. <br>Ihr rpi-virtuell Technik Team</p>';
-		});
+		//wp_add_dashboard_widget('custom_help_widget', '<b  style="color:red;">Supportmeldung</b>',  function(){echo 'Inhalt';});
 	}
 
 	function etool_generator($atts, $content=''){
