@@ -195,7 +195,7 @@ class RW_MultisiteTools{
 
 	// fix Learningapp provider output
 	function oembed_learningapps_provider_result($html, $url, $args) {
-		
+
 		//var_dump($html, $url, $args);
 
 		$html = str_replace('http://LearningApps.org', 'https://LearningApps.org' , $html);
@@ -204,18 +204,34 @@ class RW_MultisiteTools{
 
 	}
 
+	/**
+	 * fügt virtuelle OEmbed Provider hinzu und sendet die anfrage an oembed.php
+	 *
+	 * - h5p aus wordpressblogs
+	 */
 	static function register_providers() {
-		
-		
+
+
 		$provider = plugin_dir_url(__FILE__ ).'oembed.php';
-		
+
 		wp_oembed_add_provider('#https://.*/wp-admin/admin-ajax\.php\?action=h5p_embed.*#', $provider, true);
 		wp_oembed_add_provider('https://religionsunterricht.net/ru/*', $provider, false);
-		
+
 	}
 
 
-	
+	/**
+	 * @hook map_meta_cap
+	 *
+	 * @param $caps
+	 * @param $cap
+	 * @param $user_id
+	 *
+	 * @return mixed|string[]
+	 *
+	 * Ermöglicht Adminitratoren und Redakteuren ungefiltertes HTML, was häfig in den Blocks übergeben wird zu setzen.
+	 *
+	 */
 	static function allow_unfiltered_html( $caps, $cap, $user_id ) {
 		if ( 'unfiltered_html' === $cap && (user_can( $user_id, 'editor' ) || user_can( $user_id, 'administrator' ) ) ) {
 			$caps = array( 'unfiltered_html' );
@@ -226,69 +242,9 @@ class RW_MultisiteTools{
 
 
 	static function init(){
-		
-		add_action('init', array('RW_MultisiteTools', 'register_providers'));
+		//Allow more HTML-Tags in docs
 
-		
-		add_shortcode('rw_multisite_list_sites',function(){
-			return RW_MultisiteTools::get_all_blogs();
-		});
-		add_shortcode('rw_multisite_list_my_sites',function(){
-			return RW_MultisiteTools::get_my_blogs();
-		});
-
-		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
-		
-		add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
-
-		add_action('wp_enqueue_scripts', array('RW_MultisiteTools', 'enqueue_required_jqueryUI') );
-
-		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
-
-		add_filter( 'map_meta_cap', array('RW_MultisiteTools','allow_unfiltered_html') , 10,3 );
-
-	}
-
-}
-RW_MultisiteTools::init();
-
-
-
-
-/* allow more html tags to users  ++++++++++++++++++++++++++++++++++++++++++++++++ */
-//Allow more HTML-Tags in docs
-add_action( 'init', function () {
-	global $allowedposttags;
-	$allowedposttags['iframe'] = array(
-		'src'    				=> array(),
-		'class' 				=> array(),
-		'height' 				=> array(),
-		'width'  				=> array(),
-		'frameborder'  			=> array(),
-		'style'		  			=> array(),
-		'mozallowfullscreen'	=> array(),
-		'webkitallowfullscreen'	=> array(),
-		'allowfullscreen'		=> array(),
-	);
-	$allowedposttags['div'] = array(
-		'class'    				=> array(),
-		'height' 				=> array(),
-		'width'  				=> array(),
-		'style'		  			=> array()
-	);
-
-
-});
-// allow iframes for tinyMCE
-add_filter('tiny_mce_before_init', function( $a ) {
-
-	$a["extended_valid_elements"] = 'iframe[src|class|height|width|frameborder]';
-
-	return $a;
-});
-
-add_filter( 'wp_kses_allowed_html', function($allowedposttags, $context ){
-	if ( $context == 'post' ) {
+		global $allowedposttags;
 		$allowedposttags['iframe'] = array(
 			'src'    				=> array(),
 			'class' 				=> array(),
@@ -306,8 +262,76 @@ add_filter( 'wp_kses_allowed_html', function($allowedposttags, $context ){
 			'width'  				=> array(),
 			'style'		  			=> array()
 		);
-	}
-	return $allowedposttags;
-}, 10, 2 );
 
-/* end allow more html tags to users  +++++++++++++++++++++++++++++++++++++++++++++ */
+	}
+	// allow iframes for tinyMCE
+	static function tiny_mce_before_init($a){
+
+		$a["extended_valid_elements"] = 'iframe[src|class|height|width|frameborder]';
+		return $a;
+
+	}
+	static function allow_html($allowedposttags, $context){
+		if ( $context == 'post' ) {
+			$allowedposttags['iframe'] = array(
+				'src'    				=> array(),
+				'class' 				=> array(),
+				'height' 				=> array(),
+				'width'  				=> array(),
+				'frameborder'  			=> array(),
+				'style'		  			=> array(),
+				'mozallowfullscreen'	=> array(),
+				'webkitallowfullscreen'	=> array(),
+				'allowfullscreen'		=> array(),
+			);
+			$allowedposttags['div'] = array(
+				'class'    				=> array(),
+				'height' 				=> array(),
+				'width'  				=> array(),
+				'style'		  			=> array()
+			);
+		}
+		return $allowedposttags;
+	}
+
+	static function setup(){
+
+		add_action('init', array('RW_MultisiteTools', 'init'));
+		add_action('tiny_mce_before_init', array('RW_MultisiteTools', 'tiny_mce_before_init'));
+		add_action('wp_kses_allowed_html', array('RW_MultisiteTools', 'allow_html'), 10,2);
+
+		add_action('init', array('RW_MultisiteTools', 'init'));
+
+		add_action('init', array('RW_MultisiteTools', 'register_providers'));
+
+
+		add_shortcode('rw_multisite_list_sites',function(){
+			return RW_MultisiteTools::get_all_blogs();
+		});
+		add_shortcode('rw_multisite_list_my_sites',function(){
+			return RW_MultisiteTools::get_my_blogs();
+		});
+
+		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
+
+		//decrepated
+		//add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
+
+		add_action('wp_enqueue_scripts', array('RW_MultisiteTools', 'enqueue_required_jqueryUI') );
+
+		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
+
+		add_filter( 'map_meta_cap', array('RW_MultisiteTools','allow_unfiltered_html') , 10,3 );
+
+
+	}
+
+}
+RW_MultisiteTools::setup();
+
+
+
+
+
+
+
