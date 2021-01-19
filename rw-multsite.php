@@ -195,6 +195,8 @@ class RW_MultisiteTools{
 
 	// fix Learningapp provider output
 	function oembed_learningapps_provider_result($html, $url, $args) {
+		
+		//var_dump($html, $url, $args);
 
 		$html = str_replace('http://LearningApps.org', 'https://LearningApps.org' , $html);
 
@@ -202,9 +204,32 @@ class RW_MultisiteTools{
 
 	}
 
+	static function register_providers() {
+		
+		
+		$provider = plugin_dir_url(__FILE__ ).'oembed.php';
+		
+		wp_oembed_add_provider('#https://.*/wp-admin/admin-ajax\.php\?action=h5p_embed.*#', $provider, true);
+		wp_oembed_add_provider('https://religionsunterricht.net/ru/*', $provider, false);
+		
+	}
+
+
+	
+	static function allow_unfiltered_html( $caps, $cap, $user_id ) {
+		if ( 'unfiltered_html' === $cap && (user_can( $user_id, 'editor' ) || user_can( $user_id, 'administrator' ) ) ) {
+			$caps = array( 'unfiltered_html' );
+		}
+
+		return $caps;
+	}
+
 
 	static function init(){
+		
+		add_action('init', array('RW_MultisiteTools', 'register_providers'));
 
+		
 		add_shortcode('rw_multisite_list_sites',function(){
 			return RW_MultisiteTools::get_all_blogs();
 		});
@@ -213,17 +238,21 @@ class RW_MultisiteTools{
 		});
 
 		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
-
+		
 		add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
 
 		add_action('wp_enqueue_scripts', array('RW_MultisiteTools', 'enqueue_required_jqueryUI') );
 
 		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
 
+		add_filter( 'map_meta_cap', array('RW_MultisiteTools','allow_unfiltered_html') , 10,3 );
+
 	}
 
 }
 RW_MultisiteTools::init();
+
+
 
 
 /* allow more html tags to users  ++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -232,6 +261,7 @@ add_action( 'init', function () {
 	global $allowedposttags;
 	$allowedposttags['iframe'] = array(
 		'src'    				=> array(),
+		'class' 				=> array(),
 		'height' 				=> array(),
 		'width'  				=> array(),
 		'frameborder'  			=> array(),
@@ -240,12 +270,19 @@ add_action( 'init', function () {
 		'webkitallowfullscreen'	=> array(),
 		'allowfullscreen'		=> array(),
 	);
+	$allowedposttags['div'] = array(
+		'class'    				=> array(),
+		'height' 				=> array(),
+		'width'  				=> array(),
+		'style'		  			=> array()
+	);
+
 
 });
 // allow iframes for tinyMCE
 add_filter('tiny_mce_before_init', function( $a ) {
 
-	$a["extended_valid_elements"] = 'iframe[src|height|width|frameborder]';
+	$a["extended_valid_elements"] = 'iframe[src|class|height|width|frameborder]';
 
 	return $a;
 });
@@ -254,6 +291,7 @@ add_filter( 'wp_kses_allowed_html', function($allowedposttags, $context ){
 	if ( $context == 'post' ) {
 		$allowedposttags['iframe'] = array(
 			'src'    				=> array(),
+			'class' 				=> array(),
 			'height' 				=> array(),
 			'width'  				=> array(),
 			'frameborder'  			=> array(),
@@ -261,6 +299,12 @@ add_filter( 'wp_kses_allowed_html', function($allowedposttags, $context ){
 			'mozallowfullscreen'	=> array(),
 			'webkitallowfullscreen'	=> array(),
 			'allowfullscreen'		=> array(),
+		);
+		$allowedposttags['div'] = array(
+			'class'    				=> array(),
+			'height' 				=> array(),
+			'width'  				=> array(),
+			'style'		  			=> array()
 		);
 	}
 	return $allowedposttags;
