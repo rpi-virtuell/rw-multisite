@@ -2,9 +2,9 @@
 /**
  * Plugin Name:      RW Multisite
  * Plugin URI:       https://github.com/rpi-virtuell/rw_multisite
- * Description:      Tools for Wordpress Multisite. Use shortcodes: [rw_multisite_list_sites] [rw_multisite_list_my_sites] [etool]
+ * Description:      Tools for Wordpress Multisite
  * Author:           Joachim Happel
- * Version:          0.0.5
+ * Version:          0.0.6
  * Licence:          GPLv3
  * Author URI:       http://joachim-happel.de
  * Text Domain:      rw_remote_auth_client
@@ -95,7 +95,7 @@ class RW_MultisiteTools{
 
 	// fix Learningapp provider output
 	function oembed_learningapps_provider_result($html, $url, $args) {
-		
+
 		//var_dump($html, $url, $args);
 
 		$html = str_replace('http://LearningApps.org', 'https://LearningApps.org' , $html);
@@ -105,17 +105,17 @@ class RW_MultisiteTools{
 	}
 
 	static function register_providers() {
-		
-		
+
+
 		$provider = plugin_dir_url(__FILE__ ).'oembed.php';
-		
+
 		wp_oembed_add_provider('#https://.*/wp-admin/admin-ajax\.php\?action=h5p_embed.*#', $provider, true);
 		wp_oembed_add_provider('https://religionsunterricht.net/ru/*', $provider, false);
-		
+
 	}
 
 
-	
+
 	static function allow_unfiltered_html( $caps, $cap, $user_id ) {
 		if ( 'unfiltered_html' === $cap && (user_can( $user_id, 'editor' ) || user_can( $user_id, 'administrator' ) ) ) {
 			$caps = array( 'unfiltered_html' );
@@ -126,13 +126,13 @@ class RW_MultisiteTools{
 
 
 	static function init(){
-		
+
 		add_action('init', array('RW_MultisiteTools', 'register_providers'));
 		add_action('init', array('RW_MultisiteTools', 'allow_more_tags'));
 		add_filter('tiny_mce_before_init', array('RW_MultisiteTools', 'allow_iframes_for_tinyMCE'));
 		add_filter('wp_kses_allowed_html', array('RW_MultisiteTools', 'allow_more_tags_in_post'), 10,2);
 
-		
+
 		add_shortcode('rw_multisite_list_sites',function(){
 			return RW_MultisiteTools::get_all_blogs();
 		});
@@ -141,7 +141,7 @@ class RW_MultisiteTools{
 		});
 
 		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
-		
+
 		add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
 
 		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
