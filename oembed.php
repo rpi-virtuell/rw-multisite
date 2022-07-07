@@ -19,7 +19,7 @@ if(
 	"height": 300,
 	"maxheight": 1000,
 	"title": "h5p",
-	"url": "http://farm4.static.flickr.com/3123/2341623661_7c99f48bbf_m.jpg",
+	"url": "https://raw.githubusercontent.com/rpi-virtuell/Logos-2017/master/png/rpi-virtuell-2017.png",
 	"author_name": "h5p",
 	"author_url": "http://h5p.org",
 	"provider_name": "rpi-virtuell",

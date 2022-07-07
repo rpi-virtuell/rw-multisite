@@ -32,7 +32,7 @@ class RW_MultisiteTools{
 	static function get_my_blogs() {
 		$html = '';
 
-		if(is_user_logged_in()){
+		if(is_user_logged_in() && is_multisite()){
 			$subsites=get_blogs_of_user(get_current_user_id( ), false);
 
 			$capability = 'author';
@@ -93,109 +93,9 @@ class RW_MultisiteTools{
 		//wp_add_dashboard_widget('custom_help_widget', '<b  style="color:red;">Supportmeldung</b>',  function(){echo 'Inhalt';});
 	}
 
-	function etool_generator($atts, $content=''){
-
-		$acc_id = random_int(1,999999);
-
-		$etool = shortcode_atts( array(
-			'type' => 'accordion',
-			'active' => 'false',
-			'title_tag' => 'h3'
-		), $atts, 'etool' );
-
-		switch($etool['type']){
-			case 'accordion':
-
-
-
-				$description = str_replace('</'.$etool['title_tag'].'>','</'.$etool['title_tag'].'><div>',do_shortcode($content));
-				$description = str_replace('<'.$etool['title_tag'].'>','</div><'.$etool['title_tag'].'>',$description);
-
-
-				$html = '<div class="etool accordion" id="acc_'.$acc_id.'"><div>'.$description.'</div></div>';
-				$html = str_replace('<div></div>','',$html);
-
-				$html .= "
-						 <script>
-							  jQuery('document').ready(function (){
-								  jQuery('#acc_".$acc_id."').accordion({
-									 header: '".$etool['title_tag']."',
-									 active: ".$etool['active'].",
-									 collapsible: true,
-									 heightStyle: 'content'
-								  });
-							  });
-						 </script>
-
-						";
-
-
-				return $html;
-
-
-
-				break;
-			case 'tabs':
-
-				$description = do_shortcode($content);
-				//preg_match: alle Überschriften einsammeln
-				//  alle contents einsammeln
-				//content löschn und neu aufaben
-				//tabs <div id="tabs"><ul>...</ul></div>
-				//buttons <li><a href="#tabs-1">Label</a></li>
-				//contents <div id="tabs-1"></div>
-
-				preg_match_all ('#<'.$etool['title_tag'].'>([^<]*)</'.$etool['title_tag'].'>#', $description, $tl );
-				$tablabel = isset($tl[1])?$tl[1]:false;
-
-				if($tablabel){
-					$html = '<div id="tabs"><ul>';
-					$i = 0;
-					foreach($tablabel as $btn){
-						$html .= '<li><a href="#tabs-'.($i+1).'">'.$btn.'</a></li>';
-						$i++;
-					}
-					$c = preg_replace('#<'.$etool['title_tag'].'>([^<]*)</'.$etool['title_tag'].'>#','|---|', $description);
-					$contents = explode( '|---|' , $c );
-
-					$html .= '</ul>';
-
-					for ( $j = 1; $j <= $i; $j++ ){
-						$html .= '<div id="tabs-'.$j.'">'.$contents[$j].'</div>';
-					}
-
-					$html .= '</div><div style="clear:both; width:100%; height:1px;"></div>';
-
-					$html .= "
-						 <script>
-							  jQuery('document').ready(function (){
-								  jQuery('#tabs').tabs({'active':".$etool['active']."});
-							  });
-						 </script>
-						
-						";
-					return $html;
-				}else{
-					return $description;
-				}
-
-
-				break;
-
-			default:
-				return $content;
-		}
-
-	}
-
-	function enqueue_required_jqueryUI(){
-		wp_enqueue_style(  'etooljqueryuicss', "//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css", array (), '1.12.1', 'screen');
-		wp_enqueue_script( 'etooljqueryuijs', '//code.jquery.com/ui/1.12.1/jquery-ui.js', array (), '1.12.1', true);
-	}
-
 	// fix Learningapp provider output
 	function oembed_learningapps_provider_result($html, $url, $args) {
-
+		
 		//var_dump($html, $url, $args);
 
 		$html = str_replace('http://LearningApps.org', 'https://LearningApps.org' , $html);
@@ -204,34 +104,18 @@ class RW_MultisiteTools{
 
 	}
 
-	/**
-	 * fügt virtuelle OEmbed Provider hinzu und sendet die anfrage an oembed.php
-	 *
-	 * - h5p aus wordpressblogs
-	 */
 	static function register_providers() {
-
-
+		
+		
 		$provider = plugin_dir_url(__FILE__ ).'oembed.php';
-
+		
 		wp_oembed_add_provider('#https://.*/wp-admin/admin-ajax\.php\?action=h5p_embed.*#', $provider, true);
 		wp_oembed_add_provider('https://religionsunterricht.net/ru/*', $provider, false);
-
+		
 	}
 
 
-	/**
-	 * @hook map_meta_cap
-	 *
-	 * @param $caps
-	 * @param $cap
-	 * @param $user_id
-	 *
-	 * @return mixed|string[]
-	 *
-	 * Ermöglicht Adminitratoren und Redakteuren ungefiltertes HTML, was häfig in den Blocks übergeben wird zu setzen.
-	 *
-	 */
+	
 	static function allow_unfiltered_html( $caps, $cap, $user_id ) {
 		if ( 'unfiltered_html' === $cap && (user_can( $user_id, 'editor' ) || user_can( $user_id, 'administrator' ) ) ) {
 			$caps = array( 'unfiltered_html' );
@@ -242,6 +126,31 @@ class RW_MultisiteTools{
 
 
 	static function init(){
+		
+		add_action('init', array('RW_MultisiteTools', 'register_providers'));
+		add_action('init', array('RW_MultisiteTools', 'allow_more_tags'));
+		add_filter('tiny_mce_before_init', array('RW_MultisiteTools', 'allow_iframes_for_tinyMCE'));
+		add_filter('wp_kses_allowed_html', array('RW_MultisiteTools', 'allow_more_tags_in_post'), 10,2);
+
+		
+		add_shortcode('rw_multisite_list_sites',function(){
+			return RW_MultisiteTools::get_all_blogs();
+		});
+		add_shortcode('rw_multisite_list_my_sites',function(){
+			return RW_MultisiteTools::get_my_blogs();
+		});
+
+		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
+		
+		add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
+
+		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
+
+		add_filter( 'map_meta_cap', array('RW_MultisiteTools','allow_unfiltered_html') , 10,3 );
+
+	}
+	static function allow_more_tags(){
+		/* allow more html tags to users  ++++++++++++++++++++++++++++++++++++++++++++++++ */
 		//Allow more HTML-Tags in docs
 
 		global $allowedposttags;
@@ -262,16 +171,11 @@ class RW_MultisiteTools{
 			'width'  				=> array(),
 			'style'		  			=> array()
 		);
-
 	}
-	// allow iframes for tinyMCE
-	static function tiny_mce_before_init($a){
+	static function allow_more_tags_in_post($allowedposttags, $context){
+		/* allow more html tags to users  ++++++++++++++++++++++++++++++++++++++++++++++++ */
+		//Allow more HTML-Tags in docs
 
-		$a["extended_valid_elements"] = 'iframe[src|class|height|width|frameborder]';
-		return $a;
-
-	}
-	static function allow_html($allowedposttags, $context){
 		if ( $context == 'post' ) {
 			$allowedposttags['iframe'] = array(
 				'src'    				=> array(),
@@ -293,45 +197,12 @@ class RW_MultisiteTools{
 		}
 		return $allowedposttags;
 	}
+	function allow_iframes_for_tinyMCE($a){
+		$a["extended_valid_elements"] = 'iframe[src|class|height|width|frameborder]';
 
-	static function setup(){
-
-		add_action('init', array('RW_MultisiteTools', 'init'));
-		add_action('tiny_mce_before_init', array('RW_MultisiteTools', 'tiny_mce_before_init'));
-		add_action('wp_kses_allowed_html', array('RW_MultisiteTools', 'allow_html'), 10,2);
-
-		add_action('init', array('RW_MultisiteTools', 'init'));
-
-		add_action('init', array('RW_MultisiteTools', 'register_providers'));
-
-
-		add_shortcode('rw_multisite_list_sites',function(){
-			return RW_MultisiteTools::get_all_blogs();
-		});
-		add_shortcode('rw_multisite_list_my_sites',function(){
-			return RW_MultisiteTools::get_my_blogs();
-		});
-
-		add_action('wp_dashboard_setup', array('RW_MultisiteTools', 'custom_dashboard_widgets'));
-
-		//decrepated
-		//add_shortcode('etool', array('RW_MultisiteTools', 'etool_generator'));
-
-		add_action('wp_enqueue_scripts', array('RW_MultisiteTools', 'enqueue_required_jqueryUI') );
-
-		add_filter( 'embed_oembed_html',  array('RW_MultisiteTools', 'oembed_learningapps_provider_result') , 10,3 );
-
-		add_filter( 'map_meta_cap', array('RW_MultisiteTools','allow_unfiltered_html') , 10,3 );
-
-
+		return $a;
 	}
-
 }
-RW_MultisiteTools::setup();
-
-
-
-
-
+RW_MultisiteTools::init();
 
 
